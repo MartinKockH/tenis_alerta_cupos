@@ -1,0 +1,37 @@
+name: Monitor Cambios Tenis
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write # IMPORTANTE: Permite al bot hacer commits en tu repo
+
+jobs:
+  check-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar librerías
+        run: pip install requests
+
+      - name: Correr el script
+        env:
+          MI_COOKIE: ${{ secrets.MI_COOKIE }}
+        run: python check_tenis.py
+
+      - name: Guardar cambios del Hash en el repositorio
+        run: |
+          git config --global user.name "Bot Tenis"
+          git config --global user.email "bot@tenis.com"
+          git add ultimo_hash.txt
+          # Si el archivo cambió, hace commit. Si no cambió, no hace nada y no da error.
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Actualizando estado de la página" && git push)
